@@ -1,0 +1,53 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+rm -rf 0
+cp -rf 0.orig 0
+
+#create mesh if it does not exist
+mkdir -p mesh 
+FILE=mesh/mesh_singleWave.unv
+if [ -f "$FILE" ]; then
+    echo "$FILE exists."
+else
+    echo "$FILE does not exist."
+    echo "download $FILE"
+    curl -L -o mesh/mesh_singleWave.unv https://www.dropbox.com/s/w5xg7k13t9975e4/mesh_singleWave.unv?dl=0
+fi
+
+ideasUnvToFoam mesh/mesh_singleWave.unv
+
+sed -i '29s/patch/wall/g' constant/polyMesh/boundary
+sed -i '35s/patch/wall/g' constant/polyMesh/boundary
+sed -i '41s/patch/empty/g' constant/polyMesh/boundary
+sed -i '47s/patch/empty/g' constant/polyMesh/boundary
+
+runApplication checkMesh
+runApplication setFields
+
+# Set application name
+application=$(getApplication)
+
+runApplication $application
+#
+# postprocessing
+postProcess -func writeCellCentres -time 0
+postProcess -func writeCellVolumes -time 0
+
+FILE=jrOFapplications.py
+if [ -f "$FILE" ]; then
+    echo "$FILE exists."
+else
+    echo "$FILE does not exist."
+    echo "download $FILE"
+    curl -LJO https://raw.githubusercontent.com/JulienReveillon/openfoam-training/main/python/pospro/jrOFapplications.py
+fi
+
+python3 posproImpact.py &
+python3 posproOvertopping.py &
+
+
+#------------------------------------------------------------------------------
