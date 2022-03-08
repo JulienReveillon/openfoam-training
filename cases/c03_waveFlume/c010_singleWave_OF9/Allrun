@@ -20,10 +20,10 @@ fi
 
 ideasUnvToFoam mesh/mesh_singleWave.unv
 
-sed -i '29s/patch/wall/g' constant/polyMesh/boundary
-sed -i '35s/patch/wall/g' constant/polyMesh/boundary
-sed -i '41s/patch/empty/g' constant/polyMesh/boundary
-sed -i '47s/patch/empty/g' constant/polyMesh/boundary
+sed -i '27s/patch/wall/g' constant/polyMesh/boundary
+sed -i '33s/patch/wall/g' constant/polyMesh/boundary
+sed -i '39s/patch/empty/g' constant/polyMesh/boundary
+sed -i '45s/patch/empty/g' constant/polyMesh/boundary
 
 runApplication checkMesh
 runApplication setFields
