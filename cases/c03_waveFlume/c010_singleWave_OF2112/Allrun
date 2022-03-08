@@ -15,7 +15,7 @@ if [ -f "$FILE" ]; then
 else
     echo "$FILE does not exist."
     echo "download $FILE"
-    curl -L -o mesh/mesh_singleWave.unv https://www.dropbox.com/s/w5xg7k13t9975e4/mesh_singleWave.unv?dl=0
+    wget -O mesh/mesh_singleWave.unv https://www.dropbox.com/s/w5xg7k13t9975e4/mesh_singleWave.unv?dl=0
 fi
 
 ideasUnvToFoam mesh/mesh_singleWave.unv
@@ -43,7 +43,7 @@ if [ -f "$FILE" ]; then
 else
     echo "$FILE does not exist."
     echo "download $FILE"
-    curl -LJO https://raw.githubusercontent.com/JulienReveillon/openfoam-training/main/python/pospro/jrOFapplications.py
+    wget -O jrOFapplications.py https://raw.githubusercontent.com/JulienReveillon/openfoam-training/main/python/pospro/jrOFapplications.py
 fi
 
 python3 posproImpact.py &

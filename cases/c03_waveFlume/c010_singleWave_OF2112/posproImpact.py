@@ -49,6 +49,6 @@ if __name__ == "__main__":
     plt.tight_layout()
     figFile='waterImpactForce.pdf'
     plt.savefig(figFile)
-    plt.show()
+    # plt.show()
 
 
