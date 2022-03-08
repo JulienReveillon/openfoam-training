@@ -1,0 +1,30 @@
+cd $FOAM_RUN
+ls
+mkdir c03_waveFlume
+cp -r $FOAM_TUTORIALS/multiphase/interFoam/laminar/damBreak/damBreak c010_waveImpact
+cd c010_waveImpact
+rm system/sampling 
+rm system/blockMeshDict
+gedit system/controlDict ->[if any : suppress all analysis functions]
+mkdir mesh
+cd mesh
+salome -> [create the geometry (.hdf file), the mesh (.unv file) and the obstacle shape (.stl file)]
+cd ..
+pwd ->[you must be back into case directory]
+gedit 0.orig/alpha.water  0.orig/p_rgh  0.orig/U &   ->[intialize boundary conditions]
+gedit constant/g & ->[set g along -z (0 0 -9.81) ]
+ideasUnvToFoam mesh/mesh_singleWave.unv
+gedit constant/polyMesh/boundary &   ->[replace patch into wall and embty accordingly to the considered surface]
+gedit Allrun &  -> modify Allrun to automatize all the preceding steps
+
+setFields
+interFoam
+paraFoam
+
+or 
+
+./Allrun
+
+
+
+
