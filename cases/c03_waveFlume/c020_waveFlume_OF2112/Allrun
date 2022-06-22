@@ -1,0 +1,22 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+restore0Dir
+
+ideasUnvToFoam mesh/mesh_waveFlumeRocks.unv
+
+sed -i '29s/patch/wall/g' constant/polyMesh/boundary
+sed -i '35s/patch/wall/g' constant/polyMesh/boundary
+sed -i '41s/patch/wall/g' constant/polyMesh/boundary
+sed -i '47s/patch/wall/g' constant/polyMesh/boundary
+sed -i '53s/patch/empty/g' constant/polyMesh/boundary
+sed -i '59s/patch/empty/g' constant/polyMesh/boundary
+
+
+runApplication setFields
+
+runApplication $(getApplication)
+
+#------------------------------------------------------------------------------
