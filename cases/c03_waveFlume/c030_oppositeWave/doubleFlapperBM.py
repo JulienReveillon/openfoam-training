@@ -70,6 +70,60 @@ class OpenFoamBlockMeshDictWriter(object):
         file_bMD.write('\n'.join(self._bMDfile_lines))
         file_bMD.close()
         
+class OpenFoamTopoSetDictWriter(object):
+    # Create a topoSetDict file 
+    def __init__(self, project_path, topoSetDict_location, topoSetDict_data):
+        # Arguments
+        #    project_path         : path to the openFoam project - e.g. $FOAM_RUN/myProject
+        #    topoSetDict_location : location of the topoSetDict file in the project 
+        #    topoSetDict_data     : string array with mesh data
+
+        self._project_path       = project_path
+        self._location           = topoSetDict_location
+        self._data               = topoSetDict_data
+
+        self._tSDfile_lines = []
+        self._create_tSDheader()
+        self._add_data()
+        self._write_data()
+
+    def _create_tSDheader(self):
+        # OpenFOAM blockMeshDict file header
+        self._tSDfile_lines.append("/*--------------------------------*- C++ -*----------------------------------*\\")
+        self._tSDfile_lines.append("| =========                 |                                                 |")
+        self._tSDfile_lines.append("| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |")
+        self._tSDfile_lines.append("|  \\    /   O peration     | Version:  v2112                                 |")
+        self._tSDfile_lines.append("|   \\  /    A nd           | Website:  www.openfoam.com                      |")
+        self._tSDfile_lines.append("|    \\/     M anipulation  |                                                 |")
+        self._tSDfile_lines.append("\*---------------------------------------------------------------------------*/")
+        self._tSDfile_lines.append("FoamFile")
+        self._tSDfile_lines.append("{")
+        self._tSDfile_lines.append("    version     2.0;")
+        self._tSDfile_lines.append("    format      ascii;")
+        self._tSDfile_lines.append("    class       dictionary;")
+        self._tSDfile_lines.append("    object      topoSetDict;")
+        self._tSDfile_lines.append("}")
+        self._tSDfile_lines.append("// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //")
+        self._tSDfile_lines.append("")
+
+    def _add_data(self):
+        # Append the mesh data to the file
+        self._tSDfile_lines = self._tSDfile_lines + self._data
+        self._tSDfile_lines.append("")
+        self._tSDfile_lines.append("// ************************************************************************* //")
+
+    def _write_data(self):
+        # write the blockMeshDict file
+        path_name = os.path.join(self._project_path, self._location)
+        if os.path.exists(path_name):
+            print('I... topoSetDict path : '+path_name)
+        else:
+            print('E... error : topoSetDict path '+path_name+' do not exists')
+            sys.exit()
+        file_tSD = open(os.path.join(path_name, "topoSetDict"), "w")
+        file_tSD.write('\n'.join(self._tSDfile_lines))
+        file_tSD.close()
+        
 
 class bmDoubleFlapper(object):
 	# Constructor
@@ -81,6 +135,10 @@ class bmDoubleFlapper(object):
         self._FY      = FY       # 
         self._DX      = DX       # 
         self._DY      = DY       #
+        self._GX      = FX+2*layerF
+        self._GY      = FY+2*layerF
+        self._LX      = DX-self._GX/2
+        self._LY      = DY-layerF
         self._layerF  = layerF   # 
         self._deltaG  = deltaG   #      
         self._dens    = 1./deltaG 
@@ -118,24 +176,24 @@ class bmDoubleFlapper(object):
         FY = self._FY             # 
         DX = self._DX             # 
         DY = self._DY             #
+        LX = self._LX             # 
+        LY = self._LY             #  
+        GX = self._GX             # 
+        GY = self._GY             #      
         layerF = self._layerF     # 
-        GX = FX+2*layerF
-        GY = FY+2*layerF
-        LX = DX-GX/2
-        LY = DY-layerF
-              
+          
         #
         # 8 vertices
         #
         return [
-          (-TX/2+LX,LY,-TZ/2),
+          (-TX/2+LX,   LY,-TZ/2),
           (-TX/2+LX+GX,LY,-TZ/2),
           (-TX/2+LX+GX,LY+GY,-TZ/2),
-          (-TX/2+LX,LY,-TZ/2),
-          (-TX/2+LX,LY,TZ/2),
+          (-TX/2+LX,   LY+GY,-TZ/2),
+          (-TX/2+LX,   LY,TZ/2),
           (-TX/2+LX+GX,LY,TZ/2),
           (-TX/2+LX+GX,LY+GY,TZ/2),
-          (-TX/2+LX,LY,TZ/2)
+          (-TX/2+LX,   LY+GY,TZ/2)
                ]
                
     def _defineVerticesFlapperR(self):
@@ -147,23 +205,22 @@ class bmDoubleFlapper(object):
         FY = self._FY             # 
         DX = self._DX             # 
         DY = self._DY             #
+        LX = self._LX             # 
+        LY = self._LY             # 
+        GX = self._GX             # 
+        GY = self._GY             #  
         layerF = self._layerF     # 
-        GX = FX+2*layerF
-        GY = FY+2*layerF
-        LX = DX-GX/2
-        LY = DY-layerF
-             
         #
         # 8 vertices
         #
         return [
           (TX/2-LX-GX,LY,-TZ/2),
-          (TX/2-LX,LY,-TZ/2),
-          (TX/2-LX,LY+GY,-TZ/2),
+          (TX/2-LX,   LY,-TZ/2),
+          (TX/2-LX,   LY+GY,-TZ/2),
           (TX/2-LX-GX,LY+GY,-TZ/2),
           (TX/2-LX-GX,LY,TZ/2),
-          (TX/2-LX,LY,TZ/2),
-          (TX/2-LX,LY+GY,TZ/2),
+          (TX/2-LX,   LY,TZ/2),
+          (TX/2-LX,   LY+GY,TZ/2),
           (TX/2-LX-GX,LY+GY,TZ/2)
                ]
 
@@ -272,7 +329,109 @@ class bmDoubleFlapper(object):
             "    }"
                         
                ]
-               
+
+
+
+    # toposet : define cellSet background: c0 and mesh around both flappers: c1
+    def _defineTopoSet(self):
+        #simplify the expressions
+        LX      = self._LX             # 
+        LY      = self._LY             # 
+        DX      = self._DX             # 
+        DY      = self._DY             # 
+        DZ      = 1        
+        FX      = self._FX             # 
+        FY      = self._FY             # 
+        TX      = self._TX             # 
+        TY      = self._TY             #         
+        deltaIn = 0.001                # shift inside box
+        #
+        # 6 vertices
+        #
+        return [ 
+            "actions",
+            "(",
+            "    {",
+            "        name    c0;",
+            "        type    cellSet;",
+            "        action  new;",
+            "        source  regionsToCell;",
+            "        insidePoints",            
+            "        (",
+            "            (0 "+str(deltaIn)+" 0)",
+            "        );",
+            "    }",
+            "\n",
+            "    {", 
+            "        name    c1;",
+            "        type    cellSet;",
+            "        action  new;",
+            "        source  cellToCell;",
+            "        set     c0;",            
+            "    }",            
+            "\n",
+            "    {",
+            "        name    c1;",
+            "        type    cellSet;",
+            "        action  invert;",         
+            "    }",       
+            "\n",
+            "    {",
+            "        name    c2;",
+            "        type    cellSet;",
+            "        action  new;",
+            "        source  regionsToCell;",
+            "        set     c1;",            
+            "        insidePoints",            
+            "        (",
+            "            ("+str(-TX/2+LX+deltaIn)+" "+str(LY+deltaIn)+" 0)",
+            "        );",
+            "    }",  
+            "\n",
+            "    {", 
+            "        name    c1;",
+            "        type    cellSet;",
+            "        action  subtract;",
+            "        source  cellToCell;",
+            "        set     c2;",            
+            "    }",            
+            "\n",
+            "    {", 
+            "        name    box;",
+            "        type    cellSet;",
+            "        action  new;",
+            "        source  cellToCell;",
+            "        set     c1;",            
+            "    }",            
+            "\n",       
+            "    {", 
+            "        name    box;",
+            "        type    cellSet;",
+            "        action  add;",
+            "        source  cellToCell;",
+            "        set     c2;",            
+            "    }",            
+            "\n",  
+            "    {", 
+            "        name    box;",
+            "        type    cellSet;",
+            "        action  subset;",
+            "        source  boxToCell;",
+            "        boxes",            
+            "        (",
+            "            ("+str(-TX/2+DX-FX/2)+" "+str(DY)+" -1)("+str(-TX/2+DX+FX/2)+" "+str(DY+FY)+" 1)",
+            "            ("+str( TX/2-DX-FX/2)+" "+str(DY)+" -1)("+str( TX/2-DX+FX/2)+" "+str(DY+FY)+" 1)",
+            "        );",          
+            "    }",            
+            "\n",  
+            "    {",
+            "        name    box;",
+            "        type    cellSet;",
+            "        action  invert;",         
+            "    }", 
+            ");",      
+            "\n"                    
+               ]               
 
     # write blockMeshDict File
     def writeBlockMeshDict(self):
@@ -322,66 +481,20 @@ class bmDoubleFlapper(object):
         print('I... blockMeshDict generated')
         
 
-    # toposet : define background c0 inside point
-    def _defineBackground(self):
-        #simplify the expressions
-        TX = self._TX             # 
-        TY = self._TY             #             # 
-        TZ = self._TZ
-        #
-        # 6 vertices
-        #
-        return [ 
-            "    {",
-            "        name    c0;",
-            "        type    cellSet;",
-            "        action  new;",
-            "        source  regionsToCell;",
-            "        insidePoints"            
-            "        (",
-            "            (0 0.01 0)",
-            "        );",
-            "    }",
-            "\n",
-            "    {",
-            "        name    c1;",
-            "        type    cellSet;",
-            "        action  new;",
-            "        source  cellToCell;",
-            "        set     c0"            
-            "    }",            
-            "\n",
-            "    {",
-            "        name    c1;",
-            "        type    cellSet;",
-            "        action  invert;",         
-            "    }",        
-               ]
 
        
     # write topoSetDict File
     def writeTopoSetDict(self):
-        insideC0 = self._defineC0inside()
-        topoSetDict  = []
-        topoSetDict.append('actions')
-        topoSetDict.append('(')
-        for index, vertex in enumerate(verticesArrayB):
-            blockMeshDict.append("    (%e %e %e) " %vertex + "// %i" %index)
-        blockMeshDict.append("\n")
-        for index, vertex in enumerate(verticesArrayL):
-            blockMeshDict.append("    (%e %e %e) " %vertex + "// %i" %(index+8))
-        blockMeshDict.append("\n")
-        for index, vertex in enumerate(verticesArrayR):
-            blockMeshDict.append("    (%e %e %e) " %vertex + "// %i" %(index+16))
-        topoSetDict.append(");\n")
+        topoSetDict = self._defineTopoSet()
         #
         file = OpenFoamTopoSetDictWriter(self._projectPath,
                                   "system",
                                    topoSetDict)
         #
-        print('I... blockMeshDict generated')
+        print('I... topoSetDict generated')
 
 if __name__ == '__main__':
     foamCaseDir = os.getcwd()  #python script must be executed form OF running directory
     doubleFlapper = bmDoubleFlapper(TX=2.22, TY=0.8, FX=0.02, FY=0.6, layerF=0.02, DX=0.11, DY=0.04, deltaG=0.002, projectPath=foamCaseDir)
     doubleFlapper.writeBlockMeshDict()
+    doubleFlapper.writeTopoSetDict()
